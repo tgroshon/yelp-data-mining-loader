@@ -9,35 +9,37 @@ import json
 import decimal
 from datetime import datetime
 
-def iterate_file(jsonfile, shortcircuit=True):
+def iterate_file(model_name, shortcircuit=True, status_frequency=500):
     i = 0
-    jsonfilename = "json/yelp_training_set_%s.json" % jsonfile
+    jsonfilename = "json/yelp_training_set_%s.json" % model_name.lower()
     with open(jsonfilename) as jfile:
-        for line in jfile.readlines():
+        for line in jfile:
             i += 1
             yield json.loads(line)
-            if i % 500 == 0:
+            if i % status_frequency == 0:
                 print("Status >>> %s: %d" % (jsonfilename, i))
-            if shortcircuit and i == 10:
-                raise StopIteration()
-    
+                if shortcircuit and i == 10:
+                    raise StopIteration()
+                    
     
 def save_businesses():
     for bdata in iterate_file("business", shortcircuit=False):
+        business = Business()
+        business.business_id = bdata['business_id']
+        business.name = bdata['name']
+        business.full_address = bdata['full_address']
+        business.city = bdata['city']
+        business.state = bdata['state']
+        business.latitude = bdata['latitude']
+        business.longitude = bdata['longitude']
+        business.stars = decimal.Decimal(bdata.get('stars', 0))
+        business.review_count = int(bdata['review_count'])
+        business.is_open = True if bdata['open'] == "True" else False
+        business.save()
+
         save_categories(bdata['business_id'], bdata['categories'])
         save_neighborhoods(bdata['business_id'], bdata['neighborhoods'])
-        # business = Business()
-        # business.business_id = bdata['business_id']
-        # business.name = bdata['name']
-        # business.full_address = bdata['full_address']
-        # business.city = bdata['city']
-        # business.state = bdata['state']
-        # business.latitude = bdata['latitude']
-        # business.longitude = bdata['longitude']
-        # business.stars = decimal.Decimal(bdata.get('stars', 0))
-        # business.review_count = int(bdata['review_count'])
-        # business.is_open = True if bdata['open'] == "True" else False
-        # business.save()
+
 
 def save_categories(business_id, cat_jarray):
     for name in cat_jarray:
@@ -100,23 +102,28 @@ def save_checkins():
                     checkin.friday_count += number
                 elif day is 6:
                     checkin.saturday_count += number
-        checkin.save()
+                    checkin.save()
 
 def reset_database():
-    try:
-        # Nuke tables
-        Business.drop_table()
-        Review.drop_table()
-        User.drop_table()
-        Checkin.drop_table()
-
-        # Create clean tables
-        Business.create_table()
-        Review.create_table()
-        User.create_table()
-        Checkin.create_table()
-    except OperationalError:
-        pass
+    tables = (Business, Review, User, Checkin, Neighborhood, Category,)
+    for table in tables:
+        # Nuke the Tables
+        try:
+            table.drop_table()
+        except OperationalError:
+            pass
+        # Create the Tables
+        try:
+            table.create_table()
+        except OperationalError:
+            pass
     
 if __name__ == "__main__":
+    reset_database()
+
     save_businesses()
+    save_users()
+    save_checkins()
+    save_review()
+
+    
