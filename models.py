@@ -27,7 +27,7 @@ class Business(peewee.Model):
     name = peewee.CharField()
     full_address = peewee.CharField()
     city = peewee.CharField()
-    state = peewee.CharField(max_length=2)  # AZ
+    state = peewee.CharField(max_length=3)  # XGL
     latitude = peewee.CharField()
     longitude = peewee.CharField()
     stars = peewee.DecimalField()  # star rating rounded to half-stars
@@ -133,6 +133,27 @@ class Checkin(peewee.Model):
     thursday_count = peewee.IntegerField(default=0)
     friday_count = peewee.IntegerField(default=0)
     saturday_count = peewee.IntegerField(default=0)
+
+    class Meta:
+        database = db
+
+class Tip(peewee.Model):
+    """
+    {
+        'type': 'tip',
+        'text': (tip text),
+        'business_id': (encrypted business id),
+        'user_id': (encrypted user id),
+        'date': (date, formatted like '2012-03-14'),
+        'likes': (count),
+    }
+    """
+    tip_id = peewee.PrimaryKeyField()
+    business_id = peewee.CharField()
+    text = peewee.TextField()
+    user_id = peewee.CharField()
+    date = peewee.DateField(formats="%Y-%m-%d")  # '2012-03-14', %Y-%m-%d in strptime notation
+    likes = peewee.IntegerField()
 
     class Meta:
         database = db
