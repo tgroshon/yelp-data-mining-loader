@@ -103,7 +103,7 @@ def save_checkins():
                     checkin.friday_count += number
                 elif day is 6:
                     checkin.saturday_count += number
-                checkin.save()
+                    checkin.save()
 
 def save_tips():
     for tdata in iterate_file("tip", shortcircuit=True):
