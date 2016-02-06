@@ -5,6 +5,7 @@ from models import User
 from models import Checkin
 from models import Neighborhood
 from models import Category
+from models import Tip
 import json
 import decimal
 from datetime import datetime
@@ -104,8 +105,18 @@ def save_checkins():
                     checkin.saturday_count += number
                     checkin.save()
 
+def save_tips():
+    for tdata in iterate_file("tip", shortcircuit=True):
+        tip = Tip()
+        tip.business_id = tdata['business_id']
+        tip.text = tdata['text']
+        tip.user_id = tdata['user_id']
+        tip.date = datetime.strptime(tdata['date'], "%Y-%m-%d")
+        tip.likes = int(tdata['likes'])
+        tip.save()
+
 def reset_database():
-    tables = (Business, Review, User, Checkin, Neighborhood, Category,)
+    tables = (Business, Review, User, Checkin, Neighborhood, Category, Tip,)
     for table in tables:
         # Nuke the Tables
         try:
@@ -124,6 +135,6 @@ if __name__ == "__main__":
     save_businesses()
     save_users()
     save_checkins()
-    save_review()
-
+    save_reviews()
+    save_tips()
     
